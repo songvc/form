@@ -6,15 +6,8 @@ import {
   validateField,
   countryMap
 } from '../utils/utils';
-import { useDebounce } from '../hooks/useDebounce';
-
 
 function App() {
-
-  const [results, setResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  console.log('resuilts', results); 
 
   const [legal, setLegal] = useState({
     firstName: '',
@@ -26,8 +19,6 @@ function App() {
     legalEntityState: '',
     legalEntityZip: ''
   })
-  const { legalEntityAddress } = legal;
-  const debouncedLegal = useDebounce(legalEntityAddress, 500);
   const [error, setError] = useState({
     firstName: true,
     lastName: true,
@@ -45,6 +36,7 @@ function App() {
       firstName: '',
       lastName: '',
       middleName: '',
+      dob: '',
       address: '',
       city: '',
       state: '',
@@ -61,6 +53,7 @@ function App() {
       firstName: true,
       lastName: true,
       middleName: true,
+      dob: true,
       address: true,
       city: true,
       state: true,
@@ -73,7 +66,6 @@ function App() {
   ]);
   const [isValidated, setIsValidated] = useState(false);
 
-
   const handleChange = (e, { name, type, value }) => {
     console.log('handle change', value);
     if (!validateField(type, value)) {
@@ -82,17 +74,6 @@ function App() {
       setError((prev) => ({ ...prev, [type]: false }))
     }
     setLegal((prev) => ({ ...prev, [type]: value }))
-  }
-
-  const search = (str) => {
-    const API_KEY = 'ge-1e618cf3d7bd023d';
-    const URL = `https://api.geocode.earth/v1/autocomplete?d=&text=${str}&api_key=${API_KEY}`;
-
-    return fetch(URL, { method: 'GET' })
-      .then(r => r.json())
-      .catch(err => {
-        console.log('err', err);
-      })
   }
 
   const validateLegal = () => {
@@ -129,7 +110,6 @@ function App() {
 
   // run validations on every error state changes, form error state changes
   useEffect(() => {
-    console.log('USE EFFECT formerror', formError);
     if (validateLegal() === 0 && validateBeneficial() === 0 && validateController() && validateOwnership()) {
       setIsValidated(true);
     } else {
@@ -137,28 +117,15 @@ function App() {
     }
   }, [error, formError])
 
-  useEffect(() => {
-    if (debouncedLegal) {
-      console.log('debouncedlegael', debouncedLegal);
-      setIsSearching(true);
-      search(debouncedLegal).then(results => {
-        console.log('results', results);
-        setIsSearching(false);
-        setResults(results.features);
-      })
-    } else {
-      setResults([])
-    }
-  }, [debouncedLegal])
 
   const addForm = () => {
     setCurr(curr + 1)
-    console.log('adding form', curr);
     setForm((prev) => [...prev, {
       index: curr,
       firstName: '',
       lastName: '',
       middleName: '',
+      dob: '',
       address: '',
       city: '',
       state: '',
@@ -173,6 +140,7 @@ function App() {
       firstName: true,
       lastName: true,
       middleName: true,
+      dob: true,
       address: true,
       city: true,
       state: true,
@@ -185,15 +153,11 @@ function App() {
   };
 
   const deleteForm = (id) => {
-    console.log('deleting id', id);
     setForm((prev) => prev.filter((f) => f.index !== id))
     setFormError((prev) => prev.filter((f) => f.index !== id))
   };
 
   const handleFormChange = (e, { name, type, id, value }) => {
-    console.log('type', type);
-    console.log('id', id);
-    console.log('value', value);
 
     if (!validateField(type, value)) {
       setFormError([...formError].map((f) => {
@@ -322,8 +286,6 @@ function App() {
                 <Form.Field
                   required={true}
                   control={Input}
-                  search={true}
-                  options={results.map((result) => result.properties.name)}
                   type={'legalEntityAddress'}
                   onChange={handleChange}
                   value={legal.legalEntityAddress}

@@ -25,6 +25,15 @@ export function validateMiddleName (str) {
     }
 }
 
+export function validateDOB (str) {
+    const regex = /^(0[1-9]|1[0-2])\/(0[1-9]|1\d|2\d|3[01])\/(19|20)\d{2}$/g;
+    if (regex.test(str)) {
+        return true 
+    } else {
+        return false
+    }
+}
+
 export function validateLegalEntity (str) {
     const regex = /[a-zA-Z0-9_ ]/g;
     if (regex.test(str)) {
@@ -115,6 +124,8 @@ export function validateField(type, value) {
         return validateLastName(value);
     case 'middleName':
         return validateMiddleName(value);
+    case 'dob':
+        return validateDOB(value);
     case 'legalEntity':
         return validateLegalEntity(value);
     case 'legalEntityAddress':

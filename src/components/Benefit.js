@@ -44,6 +44,17 @@ const Benefit = (props) => {
                         placeholder='Middle Name'
                         error={currentErrorForm.middleName}
                     />
+                    <Form.Field
+                        id={index}
+                        required={true}
+                        control={Input}
+                        label='Date of Birth (mm/dd/yyyy)'
+                        type={'dob'}
+                        onChange={handleFormChange}
+                        placeholder='Date of Birth'
+                        error={currentErrorForm.dob}
+                    />
+
                 </Form.Group>
                 <Form.Group widths='equal'>
                     <Form.Field
