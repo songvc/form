@@ -1,6 +1,11 @@
 import { useState } from 'react';
-import { Input, Grid, Form, Button } from 'semantic-ui-react'
-
+import { Input, Grid, Form, Button, Select } from 'semantic-ui-react'
+import {
+    countryMap,
+    roleMap,
+    OwnershipRanges
+} from '../utils/utils';
+  
 const Benefit = (props) => {
     const { index, deleteForm, handleFormChange, formError } = props;
     const currentErrorForm = formError.filter((form) => form.index === index)[0]
@@ -33,10 +38,10 @@ const Benefit = (props) => {
                         id={index}
                         required={true}
                         control={Input}
-                        label='M.I.'
+                        label='Middle Name.'
                         type={'middleName'}
                         onChange={handleFormChange}
-                        placeholder='M.I.'
+                        placeholder='Middle Name'
                         error={currentErrorForm.middleName}
                     />
                 </Form.Group>
@@ -86,9 +91,11 @@ const Benefit = (props) => {
                     <Form.Field
                         id={index}
                         required={true}
-                        control={Input}
+                        control={Select}
                         label='Country'
                         type={'country'}
+                        search
+                        options={countryMap}
                         onChange={handleFormChange}
                         placeholder='First name'
                         error={currentErrorForm.country}
@@ -106,9 +113,11 @@ const Benefit = (props) => {
                     <Form.Field
                         id={index}
                         required={true}
-                        control={Input}
+                        control={Select}
                         label='Ownership Percentage (0.01 - 1.00)'
                         type={'ownership'}
+                        search
+                        options={OwnershipRanges}
                         onChange={handleFormChange}
                         placeholder='Ownership Percentage'
                         error={currentErrorForm.ownership}
@@ -116,9 +125,11 @@ const Benefit = (props) => {
                     <Form.Field
                         id={index}
                         required={true}
-                        control={Input}
+                        control={Select}
                         label='Role'
                         type={'role'}
+                        search
+                        options={roleMap}
                         onChange={handleFormChange}
                         placeholder='Role'
                         error={currentErrorForm.role}

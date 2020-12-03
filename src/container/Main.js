@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Segment, List, Icon, Input, Header, Grid, Form, Button } from 'semantic-ui-react'
+import {fetch as fetchPolyfill} from 'whatwg-fetch'
+import { Segment, List, Icon, Input, Header, Grid, Form, Select, Button } from 'semantic-ui-react'
 import Benefit from '../components/Benefit';
 import {
-  validateField
+  validateField,
+  countryMap
 } from '../utils/utils';
+import { useDebounce } from '../hooks/useDebounce';
+
 
 function App() {
+
+  const [results, setResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  console.log('resuilts', results); 
 
   const [legal, setLegal] = useState({
     firstName: '',
@@ -17,6 +26,8 @@ function App() {
     legalEntityState: '',
     legalEntityZip: ''
   })
+  const { legalEntityAddress } = legal;
+  const debouncedLegal = useDebounce(legalEntityAddress, 500);
   const [error, setError] = useState({
     firstName: true,
     lastName: true,
@@ -60,10 +71,11 @@ function App() {
       role: true,
     }
   ]);
-
   const [isValidated, setIsValidated] = useState(false);
 
+
   const handleChange = (e, { name, type, value }) => {
+    console.log('handle change', value);
     if (!validateField(type, value)) {
       setError((prev) => ({ ...prev, [type]: 'Please enter a valid field' }));
     } else {
@@ -72,27 +84,33 @@ function App() {
     setLegal((prev) => ({ ...prev, [type]: value }))
   }
 
+  const search = (str) => {
+    const API_KEY = 'ge-1e618cf3d7bd023d';
+    const URL = `https://api.geocode.earth/v1/autocomplete?d=&text=${str}&api_key=${API_KEY}`;
+
+    return fetch(URL, { method: 'GET' })
+      .then(r => r.json())
+      .catch(err => {
+        console.log('err', err);
+      })
+  }
+
   const validateLegal = () => {
     const checksum = Object.values(error).map(item => !!item).reduce((acc, item) => { return acc + item }, 0);
-    console.log('checksum legal', checksum);
     return checksum;
   }
 
   const validateBeneficial = () => {
-    console.log('validating beneficla')
     const checksum = formError.reduce((acc, item) => {
       const sum = Object.values(item).map((item, i) => i !== 0 && !!item).reduce((acc, item) => acc + item, 0);
-      console.log('checksum sum', sum);
-      return acc + sum 
+      return acc + sum
     }, 0);
-    console.log('checksum beneficial', checksum);
     return checksum;
   }
 
   const validateController = () => {
     const regex = /controller/i;
-    const anyTrue = form.map((f) => regex.test(f.role)).reduce((acc, item) => acc + item ,0);
-    console.log('validating controoler', anyTrue);
+    const anyTrue = form.map((f) => regex.test(f.role)).reduce((acc, item) => acc + item, 0);
     if (anyTrue) {
       return true;
     } else {
@@ -102,7 +120,6 @@ function App() {
 
   const validateOwnership = () => {
     const ownershipTotal = form.map((f) => f.ownership).reduce((acc, item) => acc + parseFloat(item), 0);
-    console.log('validating ownership', ownershipTotal);
     if (ownershipTotal === 1) {
       return true;
     } else {
@@ -110,7 +127,7 @@ function App() {
     }
   }
 
-  // run validations on every error, form error state changes
+  // run validations on every error state changes, form error state changes
   useEffect(() => {
     console.log('USE EFFECT formerror', formError);
     if (validateLegal() === 0 && validateBeneficial() === 0 && validateController() && validateOwnership()) {
@@ -120,11 +137,25 @@ function App() {
     }
   }, [error, formError])
 
+  useEffect(() => {
+    if (debouncedLegal) {
+      console.log('debouncedlegael', debouncedLegal);
+      setIsSearching(true);
+      search(debouncedLegal).then(results => {
+        console.log('results', results);
+        setIsSearching(false);
+        setResults(results.features);
+      })
+    } else {
+      setResults([])
+    }
+  }, [debouncedLegal])
+
   const addForm = () => {
     setCurr(curr + 1)
     console.log('adding form', curr);
     setForm((prev) => [...prev, {
-      index: curr, 
+      index: curr,
       firstName: '',
       lastName: '',
       middleName: '',
@@ -272,7 +303,7 @@ function App() {
                   type={'middleName'}
                   onChange={handleChange}
                   value={legal.middleName}
-                  label='M.I.'
+                  label='Middle Name'
                   placeholder='Middle Name'
                   error={error.middleName}
                 />
@@ -291,6 +322,8 @@ function App() {
                 <Form.Field
                   required={true}
                   control={Input}
+                  search={true}
+                  options={results.map((result) => result.properties.name)}
                   type={'legalEntityAddress'}
                   onChange={handleChange}
                   value={legal.legalEntityAddress}
@@ -348,20 +381,12 @@ function App() {
               </List>
             </Segment>
             <Segment>
-                Make sure at least one of the beneficial owner is a controller and the ownership percentage pertains to 1.
+              Make sure at least one of the beneficial owner is a controller and the ownership percentage pertains to 1.
             </Segment>
           </Grid.Column>
         </Grid.Row>
 
-        {/* Under section (1), depending on the
-factual circumstances, up to four individuals (but as few as zero) may need to be identified. Regardless of the number of
-individuals identified under section (1), you must provide the identifying information of one individual under section (2). It is
-possible that in some circumstances the same individual might be identified under both sections (e.g., the President of Acme,
-Inc. who also holds a 30% equity interest). Thus, a completed form will contain the identifying information of at least one
-individual (under section (2)), and up to five individuals (i.e., one individual under section (2) and four 25 percent equity
-holders under section (1)) */}
-
-        {form.map((f,i) => {
+        {form.map((f, i) => {
           return <Benefit key={i} index={f.index} {...f} {...BenefitProps} />
         })}
 
